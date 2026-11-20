@@ -1,13 +1,12 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 resource "aws_s3_bucket" "my_bucket" {
-  # Added random numbers to avoid the global S3 naming conflict
-  bucket = "first-test-static-website-bucket-982341"
+  bucket = var.bucket_name
 
   tags = {
-    Project = "Static Website Hosting With Terraform"
+    Project = var.project_tag
   }
 }
 
@@ -50,17 +49,15 @@ resource "aws_s3_bucket_policy" "public_read_policy" {
   })
 }
 
-# 4. Upload all files and nested folders inside "dior-jenna"
+# 4. Upload all files and nested folders inside var.website_folder
 resource "aws_s3_object" "website_files" {
-  for_each = fileset("${path.module}/dior-jenna", "**/*")
+  for_each = fileset("${path.module}/${var.website_folder}", "**/*")
 
   bucket = aws_s3_bucket.my_bucket.id
   key    = each.value
-  source = "${path.module}/dior-jenna/${each.value}"
-  etag   = filemd5("${path.module}/dior-jenna/${each.value}")
+  source = "${path.module}/${var.website_folder}/${each.value}"
+  etag   = filemd5("${path.module}/${var.website_folder}/${each.value}")
 
-
-  # Map all file extensions in your project (including .webp, .svg, fonts, css, js)
   content_type = lookup({
     "html"  = "text/html",
     "css"   = "text/css",
@@ -78,9 +75,4 @@ resource "aws_s3_object" "website_files" {
     "ttf"   = "font/ttf",
     "eot"   = "application/vnd.ms-fontobject"
   }, lower(element(split(".", each.value), length(split(".", each.value)) - 1)), "application/octet-stream")
-}
-
-# 5. Output the live Website URL
-output "website_url" {
-  value = "http://${aws_s3_bucket_website_configuration.website_config.website_endpoint}"
 }

@@ -1,0 +1,4 @@
+aws_region     = "us-east-1"
+bucket_name    = "my-unique-website-bucket-12345"
+website_folder = "dior-jenna"
+project_tag    = "My Portfolio Website"
